@@ -1,0 +1,21 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build the Docker image
+      run: docker build -t my-portfolio-ci:1.1 .
+
+    - name: tag the Docker image to be pushed to docker hub
+      run: docker tag my-portfolio-ci:1.1 emmanuel2500/my-portfolio-ci:1.1
+
+    - name: push the Docker image to docker hub
+      run: docker push emmanuel2500/my-portfolio-ci:1.1
