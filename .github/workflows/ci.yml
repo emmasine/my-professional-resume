@@ -17,5 +17,11 @@ jobs:
     - name: tag the Docker image to be pushed to docker hub
       run: docker tag my-portfolio-ci:1.1 emmanuel2500/my-portfolio-ci:1.1
 
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: emmanuel2500
+        password: ${{ secrets.MYSECRETPORTFOLIOCI }}  
+
     - name: push the Docker image to docker hub
       run: docker push emmanuel2500/my-portfolio-ci:1.1
