@@ -44,23 +44,12 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
       - name: Push image to ECR
         run: docker push 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest
-
-      
-
-        
-       
-
-
-      #- name: tag the Docker image to be pushed to docker hub
-      #  run: docker tag my-portfolio:latest 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest
-
-      #- name: Login to Docker Hub
-       #with:
-        #username: emmanuel2500
-        #password: ${{ secrets.MYSECRETPORTFOLIOCI }}  
-
-      #- name: push the Docker image to docker hub
-       # run: docker push 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: task-def.json
+          service: my-app-service
+          cluster: my-app-cluster
+          wait-for-service-stability: true  
