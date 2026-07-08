@@ -1,0 +1,50 @@
+name: Build and push to ECR
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: "fs"
+          severity: "HIGH,CRITICAL"
+          exit-code: "1"
+
+      - name: Build Docker image
+        run: docker build -t 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest .
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@v0.28.0
+        with:
+          image-ref: 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL,HIGH"
+
+      - name: Push image to ECR
+        run: echo "push"
+
+        
+       
+
+
+      #- name: tag the Docker image to be pushed to docker hub
+      #  run: docker tag my-portfolio:latest 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest
+
+      #- name: Login to Docker Hub
+       #with:
+        #username: emmanuel2500
+        #password: ${{ secrets.MYSECRETPORTFOLIOCI }}  
+
+      #- name: push the Docker image to docker hub
+       # run: docker push 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest
