@@ -50,6 +50,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: task-def.json
-          service: my-app-service
-          cluster: my-app-cluster
+          service: dev-portfo-service-mrdfvprw
+          cluster: dev-cluste
           wait-for-service-stability: true  
