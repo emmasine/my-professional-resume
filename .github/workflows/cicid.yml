@@ -46,10 +46,16 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
       - name: Push image to ECR
         run: docker push 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-portfolio:latest
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+
+  Deploy-to_ecs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials for China region audience
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          task-definition: task-def.json
-          service: dev-portfo-service-mrdfvprw
-          cluster: dev-cluste
-          wait-for-service-stability: true  
+          audience: sts.amazonaws.com
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::600627356450:role/github-action-role
+      - name: Deploy to ecs
+        run: echo "Deploy to ecs"
+       
