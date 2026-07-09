@@ -1,20 +1,19 @@
 name: Build and push to ECR
-
 on:
   push:
     branches: ["main"]
-permissions:
-  id-token: write
-  contents: read
-
+permissions: # you give the workflow permission to request an OIDC token 
+   #Without:# id-token: write# GitHub cannot create the OIDC token.
+  id-token: write #This gives the workflow permission to request an OIDC token from GitHub
+  contents: read #This gives the workflow permission to read(checkout reads the cloned repo) your repository contents.
+#   For example:# - name: Checkout code#   uses: actions/checkout@v4# needs to download your source code:
+# GitHub Repository -->GitHub Runner (ubuntu-latest) # Without:# contents: read# the checkout action cannot read your files.
 jobs:
   build_scan:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
-
       - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -22,7 +21,6 @@ jobs:
           severity: "HIGH,CRITICAL"
           #exit-code: "1"
           exit-code: "1"
-
       - name: Build Docker image
         run: docker build -t 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-portfolio:latest .
 
@@ -35,20 +33,22 @@ jobs:
           exit-code: "0"
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials  # pushing image to ecr ,we need to login. To login, we need to claim who we are(credentilas) with role assuming
         uses: aws-actions/configure-aws-credentials@v4
+        # GitHub gets the OIDC token ✅
+        # GitHub requests role assumption ✅
+        # AWS STS verifies the token ✅
+        # AWS returns temporary credentials ✅
         with:
           role-to-assume: arn:aws:iam::600627356450:role/github-action-role
           aws-region: us-east-1
-
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-      - name: Push image to ECR
-        run: docker push 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-portfolio:latest
-
+      - name: Push image to ECR # Build/push job → Configure AWS credentials + ECR login.
+        run: docker push 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-portfolio:latest 
   Deploy-to_ecs:
-    needs: build_scan
+    needs: build_scan # chaining.ie. deploy will run after build_scan finish
     runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials for us region audience
@@ -57,6 +57,6 @@ jobs:
           audience: sts.amazonaws.com
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::600627356450:role/github-action-role
-      - name: Deploy to ecs
+      - name: Deploy to ecs # Deploy job → Configure AWS credentials only.
         run: echo "Deploy to ecs"
        
