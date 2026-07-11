@@ -22,12 +22,12 @@ jobs:
           #exit-code: "1"
           exit-code: "1"
       - name: Build Docker image
-        run: docker build -t 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-portfolio:latest .
+        run: docker build -t ${{secrets.AWS_ECR_REPO}}/my-portfolio:latest .
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-portfolio:latest
+          image-ref: ${{secrets.AWS_ECR_REPO}}/my-portfolio:latest
           format: "table"
           #exit-code: "1"
           exit-code: "0"
@@ -40,13 +40,13 @@ jobs:
         # AWS STS verifies the token ✅
         # AWS returns temporary credentials ✅
         with:
-          role-to-assume: arn:aws:iam::600627356450:role/github-action-role
+          role-to-assume: ${{secrets.AWS_ROLE}}/github-action-role
           aws-region: us-east-1
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
       - name: Push image to ECR # Build/push job → Configure AWS credentials + ECR login.
-        run: docker push 600627356450.dkr.ecr.us-east-1.amazonaws.com/my-portfolio:latest 
+        run: docker push ${{secrets.AWS_ECR_REPO}}/my-portfolio:latest 
   Deploy-to_ecs:
     needs: build_scan # chaining.ie. deploy will run after build_scan finish
     runs-on: ubuntu-latest
@@ -56,7 +56,7 @@ jobs:
         with:
           audience: sts.amazonaws.com
           aws-region: us-east-1
-          role-to-assume: arn:aws:iam::600627356450:role/github-action-role
+          role-to-assume: ${{secrets.AWS_ROLE}}/github-action-role
       - name: Deploy to ecs # Deploy job → Configure AWS credentials only.
         run: echo "Deploy to ecs"
-       
+        
