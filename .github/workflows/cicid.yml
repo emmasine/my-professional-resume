@@ -57,6 +57,11 @@ jobs:
           audience: sts.amazonaws.com
           aws-region: us-east-1
           role-to-assume: ${{secrets.AWS_ROLE}}/github-action-role
-      - name: Deploy to ecs # Deploy job → Configure AWS credentials only.
-        run: echo "Deploy to ecs"
-        
+      #- name: Deploy to ecs # Deploy job → Configure AWS credentials only.
+       # run: echo "Deploy to ecs"
+      - name: Deploy to ecs
+        run: |
+          aws ecs update-service \
+            --cluster dev-cluste \
+            --service dev-portfo-service-mrdfvprw \
+            --force-new-deployment
