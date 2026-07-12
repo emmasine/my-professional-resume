@@ -33,8 +33,85 @@ jobs:
           exit-code: "0"
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
-      - name: Configure AWS credentials  # pushing image to ecr ,we need to login. To login, we need to claim who we are(credentilas) with role assuming
+      - name: Configure AWS credentials  # pushing image to ecr ,
+      #we need to login. To login, we need to claim who we are(tokens) with role assuming,
+      # then after get verified by aws, aws will give us the credentials that we will use to login from github to aws 
+
+
+
         uses: aws-actions/configure-aws-credentials@v4
+#-------------------------------------------------------------------------------
+#  when the workflow reaches  uses: aws-actions/configure-aws-credentials@v4 ,  |
+# all of that OIDC token exchange and temporary credential creation happens:    |
+#-------------------------------------------------------------------------------
+
+#1.Create an  OIDC token from Github:
+#-************************************
+# #{
+#   "iss": "https://token.actions.githubusercontent.com",
+#   "sub": "repo:emmasine/my-portfolio:ref:refs/heads/main",
+#   "aud": "sts.amazonaws.com",
+#   "repository": "emmasine/my-portfolio",
+#   "repository_owner": "emmasine",
+#   "ref": "refs/heads/main",
+#   "job_workflow_ref": "emmasine/my-portfolio/.github/workflows/deploy.yml@refs/heads/main"
+# }   
+
+# Meaning:
+
+# iss → Who issued the token (GitHub)
+# sub → Which repository is requesting access
+# aud → Who should receive the token (AWS STS)
+# ref → Which branch triggered it
+
+# 2. AWS verifies the token:
+#****************************
+
+# Your IAM Role trust policy might say:
+
+# {
+#   "Effect": "Allow",
+#   "Principal": {
+#     "Federated": "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
+#   },
+#   "Action": "sts:AssumeRoleWithWebIdentity",
+#   "Condition": {
+#     "StringLike": {
+#       "token.actions.githubusercontent.com:sub":
+#       "repo:emmasine/my-portfolio:*"
+#     }
+#   }
+# }
+
+# AWS asks:
+
+# "Does this token really come from GitHub, and is this repository allowed to assume this role?"
+
+# If yes, AWS approves.
+
+# 3. AWS returns temporary credentials:
+#**************************************
+
+# AWS STS gives GitHub Actions temporary credentials like:
+
+# {
+#   "AccessKeyId": "ASIA5Z7EXAMPLE123",
+#   "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLE",
+#   "SessionToken": "IQoJb3JpZ2luX2VjEEXAMPLE...",
+#   "Expiration": "2026-07-12T22:30:00Z"
+# }
+
+# These are not your permanent AWS access keys.
+
+# They are temporary.
+
+
+
+# of course some ofthe  information from the GitHub OIDC token is compared against information that you already configured 
+# in AWS IAM OIDC provider
+#  and IAM role trust policy.
+#============================================================================================
+
         # GitHub gets the OIDC token ✅
         # GitHub requests role assumption ✅
         # AWS STS verifies the token ✅
@@ -65,3 +142,11 @@ jobs:
             --cluster dev-cluste \
             --service dev-portfo-service-mrdfvprw \
             --force-new-deployment
+
+# or you can use the following(uses:)
+          # - name: Deploy to ECS
+          #   uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+          #   with:
+          #     task-definition: dev-portfolio-td
+          #     service: dev-portfo-service-mrdfvprw
+          #     cluster: dev-cluste
